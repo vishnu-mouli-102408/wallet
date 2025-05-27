@@ -1,10 +1,11 @@
 import "./App.css";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function App() {
 	return (
-		<>
-			<h1>Hello World</h1>
-		</>
+		<ThemeProvider defaultTheme="dark" storageKey="wallet-theme">
+			<h1>Stepper component</h1>
+		</ThemeProvider>
 	);
 }
 
