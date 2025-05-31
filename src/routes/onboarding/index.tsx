@@ -1,3 +1,4 @@
+import { OnboardingVariant } from "@/components/onboarding";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/onboarding/")({
@@ -5,5 +6,5 @@ export const Route = createFileRoute("/onboarding/")({
 });
 
 function RouteComponent() {
-	return <div>Hello "/onboarding/"!</div>;
+	return <OnboardingVariant />;
 }

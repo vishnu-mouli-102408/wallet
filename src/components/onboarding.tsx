@@ -1,0 +1,165 @@
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { Zap, Lock, Globe, Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
+import { Stepper } from "./stepper";
+import StepOne from "./steps/step-one";
+import StepTwo from "./steps/step-two";
+import StepThree from "./steps/step-three";
+import StepFour from "./steps/step-four";
+
+const steps = ["Introduction", "Security", "Features", "Launch"];
+
+const stepData = [
+	{
+		icon: Zap,
+		title: "Lightning Fast",
+		subtitle: "Welcome to the future of crypto",
+		description: "Experience blazing-fast transactions with minimal fees. Built for the next generation of Web3 users.",
+		gradient: "from-yellow-400 to-orange-500",
+		bgGradient: "from-gray-800 to-gray-900",
+		component: StepOne,
+	},
+	{
+		icon: Lock,
+		title: "Setup your wallet",
+		subtitle: "Your assets, protected",
+		description: "Create a new wallet or import an existing one. We'll help you get started with the basics.",
+		gradient: "from-red-400 to-pink-500",
+		bgGradient: "from-gray-800 to-gray-900",
+		component: StepTwo,
+	},
+	{
+		icon: Globe,
+		title: "Multi-Chain Universe",
+		subtitle: "One wallet, endless possibilities",
+		description:
+			"Seamlessly interact with Ethereum, Solana, Polygon, and more. The entire Web3 ecosystem at your fingertips.",
+		gradient: "from-blue-400 to-cyan-500",
+		bgGradient: "from-gray-800 to-gray-900",
+		component: StepThree,
+	},
+	{
+		icon: Sparkles,
+		title: "Ready to Explore",
+		subtitle: "Your journey begins now",
+		description: "Welcome to Web3! Start exploring DeFi, NFTs, and decentralized applications with confidence.",
+		gradient: "from-purple-400 to-indigo-500",
+		bgGradient: "from-gray-800 to-gray-900",
+		component: StepFour,
+	},
+];
+
+export const OnboardingVariant: React.FC = () => {
+	const [currentStep, setCurrentStep] = useState(0);
+
+	const nextStep = () => {
+		if (currentStep < steps.length - 1) {
+			setCurrentStep(currentStep + 1);
+		}
+	};
+
+	const prevStep = () => {
+		if (currentStep > 0) {
+			setCurrentStep(currentStep - 1);
+		}
+	};
+
+	const currentData = stepData[currentStep];
+	const IconComponent = currentData.icon;
+	const StepComponent = currentData.component;
+
+	return (
+		<div className="min-h-screen bg-black flex items-center justify-center p-4">
+			<div className="max-w-4xl w-full">
+				<motion.div
+					className="bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-800"
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ duration: 0.6 }}
+				>
+					<div className="flex flex-col lg:flex-row">
+						{/* Left side - Visual */}
+						<div
+							className={`lg:w-1/2 p-8 bg-gradient-to-br ${currentData.bgGradient} flex items-center justify-center`}
+						>
+							<AnimatePresence mode="wait">
+								<motion.div
+									key={currentStep}
+									initial={{ opacity: 0, scale: 0.8, rotateY: 90 }}
+									animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+									exit={{ opacity: 0, scale: 0.8, rotateY: -90 }}
+									transition={{ duration: 0.5 }}
+									className="text-center"
+								>
+									<motion.div
+										className={`w-32 h-32 bg-gradient-to-r ${currentData.gradient} rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg`}
+										whileHover={{ scale: 1.1, rotate: 360 }}
+										transition={{ duration: 0.6 }}
+									>
+										<IconComponent className="w-16 h-16 text-white" />
+									</motion.div>
+
+									<div className="space-y-4">
+										{[...Array(3)].map((_, i) => (
+											<motion.div
+												key={i}
+												className={`h-2 bg-gradient-to-r ${currentData.gradient} rounded-full opacity-20`}
+												style={{ width: `${100 - i * 20}%` }}
+												initial={{ scaleX: 0 }}
+												animate={{ scaleX: 1 }}
+												transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
+											/>
+										))}
+									</div>
+								</motion.div>
+							</AnimatePresence>
+						</div>
+
+						{/* Right side - Content */}
+						<div className="lg:w-1/2 p-8 flex  flex-col justify-between bg-black">
+							<div>
+								<Stepper steps={steps} currentStep={currentStep} variant="numbered" className="mb-8" />
+
+								<AnimatePresence mode="wait">
+									<StepComponent />
+								</AnimatePresence>
+							</div>
+
+							<div className="flex space-x-4">
+								{currentStep > 0 && (
+									<motion.button
+										onClick={prevStep}
+										className="flex items-center space-x-2 px-6 py-3 rounded-xl border-2 border-gray-700 text-gray-300 hover:border-gray-600 hover:text-white transition-all duration-200"
+										whileHover={{ scale: 1.02 }}
+										whileTap={{ scale: 0.98 }}
+									>
+										<ArrowLeft className="w-4 h-4" />
+										<span>Previous</span>
+									</motion.button>
+								)}
+
+								<motion.button
+									onClick={nextStep}
+									className={`flex items-center justify-center space-x-2 px-8 py-3 rounded-xl bg-gradient-to-r ${currentData.gradient} text-white hover:shadow-lg transition-all duration-200 ${
+										currentStep === 0 ? "w-full" : "flex-1"
+									}`}
+									whileHover={{ scale: 1.02 }}
+									whileTap={{ scale: 0.98 }}
+								>
+									<span>
+										{currentStep === steps.length - 1
+											? "Launch Wallet"
+											: currentStep === 0
+												? "Create New Wallet"
+												: "Next Step"}
+									</span>
+									<ArrowRight className="w-4 h-4" />
+								</motion.button>
+							</div>
+						</div>
+					</div>
+				</motion.div>
+			</div>
+		</div>
+	);
+};
