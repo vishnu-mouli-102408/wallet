@@ -6,6 +6,8 @@ import StepOne from "./steps/step-one";
 import StepTwo from "./steps/step-two";
 import StepThree from "./steps/step-three";
 import StepFour from "./steps/step-four";
+import { useConfirmPassword } from "@/store";
+import { usePassword } from "@/store";
 
 const steps = ["Introduction", "Security", "Features", "Launch"];
 
@@ -22,7 +24,7 @@ const stepData = [
 	},
 	{
 		icon: Globe,
-		title: "Setup your wallet",
+		title: "Set up your wallet",
 		subtitle: "Your assets, protected",
 		description: "Create a new wallet or import an existing one. We'll help you get started with the basics.",
 		gradient: "from-red-400 to-pink-500",
@@ -32,7 +34,7 @@ const stepData = [
 	},
 	{
 		icon: Lock,
-		title: "Setup a Password",
+		title: "Set up a Password",
 		subtitle: "Secure your wallet",
 		description:
 			"It's important to setup a password to secure your wallet. You'll need it to access your wallet later.",
@@ -56,7 +58,16 @@ const stepData = [
 export const OnboardingVariant: React.FC = () => {
 	const [currentStep, setCurrentStep] = useState(0);
 
-	const nextStep = () => {
+	const nextStep = async () => {
+		if (currentStep === 2 && password && confirmPassword && password === confirmPassword) {
+			// Hash password before storing in local storage
+			const hashedPassword = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
+			// Convert hash to base64 string
+			const hashArray = Array.from(new Uint8Array(hashedPassword));
+			const hashBase64 = btoa(hashArray.map((b) => String.fromCharCode(b)).join(""));
+			localStorage.setItem("password", hashBase64);
+		}
+
 		if (currentStep < steps.length - 1) {
 			setCurrentStep(currentStep + 1);
 		}
@@ -67,6 +78,12 @@ export const OnboardingVariant: React.FC = () => {
 			setCurrentStep(currentStep - 1);
 		}
 	};
+
+	const password = usePassword();
+	const confirmPassword = useConfirmPassword();
+
+	console.log("password", password, confirmPassword);
+	console.log("Current Step", currentStep);
 
 	const currentData = stepData[currentStep];
 	const IconComponent = currentData.icon;
@@ -134,7 +151,7 @@ export const OnboardingVariant: React.FC = () => {
 									<motion.button
 										onClick={prevStep}
 										className="flex items-center space-x-2 px-6 py-3 rounded-xl border-2 border-gray-700 text-gray-300 hover:border-gray-600 hover:text-white transition-all duration-200"
-										whileHover={{ scale: 1.02 }}
+										whileHover={{ scale: 1.01 }}
 										whileTap={{ scale: 0.98 }}
 									>
 										<ArrowLeft className="w-4 h-4" />
@@ -143,12 +160,21 @@ export const OnboardingVariant: React.FC = () => {
 								)}
 
 								<motion.button
+									disabled={currentStep === 2 && (!password || !confirmPassword || password !== confirmPassword)}
 									onClick={nextStep}
 									className={`flex items-center justify-center space-x-2 px-8 py-3 rounded-xl bg-gradient-to-r ${currentData.gradient} text-white hover:shadow-lg transition-all duration-200 ${
 										currentStep === 0 ? "w-full" : "flex-1"
-									}`}
-									whileHover={{ scale: 1.02 }}
-									whileTap={{ scale: 0.98 }}
+									} ${currentStep === 2 && (!password || !confirmPassword || password !== confirmPassword) ? "opacity-50 cursor-not-allowed" : ""}`}
+									whileHover={
+										currentStep === 2 && (!password || !confirmPassword || password !== confirmPassword)
+											? {}
+											: { scale: 1.01 }
+									}
+									whileTap={
+										currentStep === 2 && (!password || !confirmPassword || password !== confirmPassword)
+											? {}
+											: { scale: 0.98 }
+									}
 								>
 									<span>{currentData.buttonText}</span>
 									<ArrowRight className="w-4 h-4" />

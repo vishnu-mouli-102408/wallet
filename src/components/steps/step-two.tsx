@@ -17,11 +17,11 @@ const StepTwo = () => {
 			exit={{ opacity: 0, x: -30 }}
 			transition={{ duration: 0.4 }}
 		>
-			<h1 className="text-3xl font-bold text-white mb-3">Setup your Network</h1>
-			<p className="text-lg bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent font-semibold mb-4">
+			<h1 className="text-3xl font-bold text-white mb-3">Set up your Network</h1>
+			<p className="text-lg bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent font-semibold mb-6">
 				Select the network you want to use. You can change this later.
 			</p>
-			<div className="grid grid-cols-1 mb-6 gap-4">
+			<div className="grid grid-cols-1 mb-6 gap-6">
 				<motion.div
 					onClick={() => {
 						handleNetworkChange("solana");
