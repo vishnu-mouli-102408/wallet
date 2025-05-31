@@ -18,25 +18,28 @@ const stepData = [
 		gradient: "from-yellow-400 to-orange-500",
 		bgGradient: "from-gray-800 to-gray-900",
 		component: StepOne,
+		buttonText: "Create New Wallet",
 	},
 	{
-		icon: Lock,
+		icon: Globe,
 		title: "Setup your wallet",
 		subtitle: "Your assets, protected",
 		description: "Create a new wallet or import an existing one. We'll help you get started with the basics.",
 		gradient: "from-red-400 to-pink-500",
 		bgGradient: "from-gray-800 to-gray-900",
 		component: StepTwo,
+		buttonText: "Setup Wallet",
 	},
 	{
-		icon: Globe,
-		title: "Multi-Chain Universe",
-		subtitle: "One wallet, endless possibilities",
+		icon: Lock,
+		title: "Setup a Password",
+		subtitle: "Secure your wallet",
 		description:
-			"Seamlessly interact with Ethereum, Solana, Polygon, and more. The entire Web3 ecosystem at your fingertips.",
+			"It's important to setup a password to secure your wallet. You'll need it to access your wallet later.",
 		gradient: "from-blue-400 to-cyan-500",
 		bgGradient: "from-gray-800 to-gray-900",
 		component: StepThree,
+		buttonText: "Next",
 	},
 	{
 		icon: Sparkles,
@@ -46,6 +49,7 @@ const stepData = [
 		gradient: "from-purple-400 to-indigo-500",
 		bgGradient: "from-gray-800 to-gray-900",
 		component: StepFour,
+		buttonText: "Create New Wallet",
 	},
 ];
 
@@ -146,13 +150,7 @@ export const OnboardingVariant: React.FC = () => {
 									whileHover={{ scale: 1.02 }}
 									whileTap={{ scale: 0.98 }}
 								>
-									<span>
-										{currentStep === steps.length - 1
-											? "Launch Wallet"
-											: currentStep === 0
-												? "Create New Wallet"
-												: "Next Step"}
-									</span>
+									<span>{currentData.buttonText}</span>
 									<ArrowRight className="w-4 h-4" />
 								</motion.button>
 							</div>
