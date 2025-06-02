@@ -1,8 +1,19 @@
 import { motion } from "motion/react";
 import { useMnemonicWords } from "@/store";
+import { useEffect, useState } from "react";
+import { Check, Copy } from "lucide-react";
 
 const StepFour = () => {
 	const mnemonicWords = useMnemonicWords();
+	const [copied, setCopied] = useState(false);
+
+	useEffect(() => {
+		if (copied) {
+			setTimeout(() => {
+				setCopied(false);
+			}, 2000);
+		}
+	}, [copied]);
 
 	return (
 		<motion.div
@@ -11,10 +22,18 @@ const StepFour = () => {
 			exit={{ opacity: 0, x: -30 }}
 			transition={{ duration: 0.4 }}
 		>
-			<h1 className="text-3xl font-bold text-white mb-3">Your Secret Recovery Phrase</h1>
-			<p className="text-lg bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent font-semibold mb-6">
-				Save this phrase in a secure location.
-			</p>
+			<div className="flex flex-row items-center justify-between">
+				<h1 className="text-3xl font-bold text-white mb-3">Your Secret Recovery Phrase</h1>
+				<div
+					onClick={() => {
+						navigator.clipboard.writeText(mnemonicWords.join(" "));
+						setCopied(true);
+					}}
+					className="flex flex-row cursor-pointer items-center justify-center hover:text-yellow-500 text-white"
+				>
+					{copied ? <Check className="w-4 h-4 text-yellow-500" /> : <Copy className="w-4 h-4 text-white" />}
+				</div>
+			</div>
 			<div className="grid grid-cols-1 gap-8 mb-8">
 				<div className="relative">
 					<div className="relative">

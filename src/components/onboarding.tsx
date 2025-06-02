@@ -6,10 +6,12 @@ import StepOne from "./steps/step-one";
 import StepTwo from "./steps/step-two";
 import StepThree from "./steps/step-three";
 import StepFour from "./steps/step-four";
-import { useConfirmPassword } from "@/store";
+import { useConfirmPassword, useNetwork } from "@/store";
 import { usePassword } from "@/store";
-import { generateMnemonicWords } from "@/lib/utils";
+import { generateMnemonicWords, generatePublicPrivateKeyPair } from "@/lib/utils";
 import { useGlobalActions } from "@/store";
+import { addSolanaKeyPair } from "@/lib/wallet";
+import { useNavigate } from "@tanstack/react-router";
 
 const steps = ["Introduction", "Security", "Features", "Launch"];
 
@@ -58,8 +60,10 @@ const stepData = [
 ];
 
 export const OnboardingVariant: React.FC = () => {
+	const navigate = useNavigate();
 	const [currentStep, setCurrentStep] = useState(0);
 	const { setMnemonicWords } = useGlobalActions();
+	const network = useNetwork();
 	const nextStep = async () => {
 		if (currentStep === 2 && password && confirmPassword && password === confirmPassword) {
 			// Hash password before storing in local storage
@@ -68,10 +72,18 @@ export const OnboardingVariant: React.FC = () => {
 			const hashArray = Array.from(new Uint8Array(hashedPassword));
 			const hashBase64 = btoa(hashArray.map((b) => String.fromCharCode(b)).join(""));
 			localStorage.setItem("password", hashBase64);
-			const words = generateMnemonicWords();
-			localStorage.setItem("mnemonicWords", JSON.stringify(words));
+			const { words, seedPhrase } = generateMnemonicWords();
+			// store seed phrase in local storage
+			localStorage.setItem("seedPhrase", seedPhrase.toString("hex"));
 			setMnemonicWords(words);
-			console.log("WORDS", words);
+		}
+
+		if (currentStep === 3) {
+			const keypair = generatePublicPrivateKeyPair(network, 0);
+			const storedPassword = localStorage.getItem("password") ?? "PASSWORD";
+			addSolanaKeyPair(keypair.publicKey, keypair.privateKey, storedPassword);
+			localStorage.setItem("onboarding-finished", "true");
+			navigate({ to: "/" });
 		}
 
 		if (currentStep < steps.length - 1) {
@@ -87,9 +99,6 @@ export const OnboardingVariant: React.FC = () => {
 
 	const password = usePassword();
 	const confirmPassword = useConfirmPassword();
-
-	console.log("password", password, confirmPassword);
-	console.log("Current Step", currentStep);
 
 	const currentData = stepData[currentStep];
 	const IconComponent = currentData.icon;
