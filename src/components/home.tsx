@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import PasswordScreen from "./password-screen";
+import HomeScreen from "./home-screen";
 
 const Home = () => {
 	const [isUnlocked, setIsUnlocked] = useState(false);
@@ -14,14 +15,7 @@ const Home = () => {
 				transition={{ duration: 0.3 }}
 				id="home-container"
 			>
-				{isUnlocked ? (
-					<div className="flex flex-col items-center justify-center h-full">
-						<h1 className="text-2xl font-bold text-white">Unlocked</h1>
-						{/* Add your unlocked content here */}
-					</div>
-				) : (
-					<PasswordScreen setIsUnlocked={setIsUnlocked} />
-				)}
+				{isUnlocked ? <HomeScreen /> : <PasswordScreen setIsUnlocked={setIsUnlocked} />}
 			</motion.div>
 		</div>
 	);

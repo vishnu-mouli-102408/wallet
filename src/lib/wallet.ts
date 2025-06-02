@@ -1,22 +1,45 @@
 import CryptoJS from "crypto-js";
+import { generatePublicPrivateKeyPair } from "./utils";
+import { toast } from "sonner";
 
 // Types
 type SolanaKeyPair = {
 	address: string;
 	privateKey: string;
 	walletNumber: number;
+	network: "solana";
 };
 
 type EthereumKeyPair = {
 	address: string;
 	privateKey: string;
 	walletNumber: number;
+	network: "ethereum";
 };
 
 type WalletData = {
 	solana: SolanaKeyPair[];
 	ethereum: EthereumKeyPair[];
 };
+
+export interface Wallet {
+	id: string;
+	name: string;
+	network: string;
+	balance: string;
+	address: string;
+	networkIcon: string;
+	privateKey: string;
+}
+
+export interface Network {
+	id: string;
+	name: string;
+	symbol: string;
+	icon: string;
+	description: string;
+	isTestnet?: boolean;
+}
 
 // Constants
 const STORAGE_KEY = "walletData";
@@ -55,14 +78,42 @@ export function loadWalletData(password: string): WalletData | null {
 export function addSolanaKeyPair(address: string, privateKey: string, password: string): void {
 	const data = loadWalletData(password) || { solana: [], ethereum: [] };
 	const walletNumber = getNextWalletNumber(data.solana);
-	data.solana.push({ address, privateKey, walletNumber });
+	data.solana.push({ address, privateKey, walletNumber, network: "solana" });
 	saveWalletData(data, password);
+}
+
+export function addSolanaWallet() {
+	const storedPassword = localStorage.getItem("password");
+	if (!storedPassword) {
+		toast.error("No password found", {
+			description: "Please create a password to add a wallet. Contact support if you need help.",
+		});
+		return;
+	}
+	const data = loadWalletData(storedPassword) || { solana: [], ethereum: [] };
+	const walletNumber = getNextWalletNumber(data.solana);
+	const keypair = generatePublicPrivateKeyPair("solana", walletNumber);
+	addSolanaKeyPair(keypair.publicKey, keypair.privateKey, storedPassword);
 }
 
 // ➕ Add Ethereum KeyPair
 export function addEthereumKeyPair(address: string, privateKey: string, password: string): void {
 	const data = loadWalletData(password) || { solana: [], ethereum: [] };
 	const walletNumber = getNextWalletNumber(data.ethereum);
-	data.ethereum.push({ address, privateKey, walletNumber });
+	data.ethereum.push({ address, privateKey, walletNumber, network: "ethereum" });
 	saveWalletData(data, password);
+}
+
+export function addEthereumWallet() {
+	const storedPassword = localStorage.getItem("password");
+	if (!storedPassword) {
+		toast.error("No password found", {
+			description: "Please create a password to add a wallet. Contact support if you need help.",
+		});
+		return;
+	}
+	const data = loadWalletData(storedPassword) || { solana: [], ethereum: [] };
+	const walletNumber = getNextWalletNumber(data.ethereum);
+	const keypair = generatePublicPrivateKeyPair("ethereum", walletNumber);
+	addEthereumKeyPair(keypair.publicKey, keypair.privateKey, storedPassword);
 }
