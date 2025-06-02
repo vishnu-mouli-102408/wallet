@@ -1,3 +1,4 @@
+import Home from "@/components/home";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
@@ -10,8 +11,8 @@ function Index() {
 		return <Navigate to="/onboarding" />;
 	}
 	return (
-		<div className="p-2">
-			<h3>Welcome Home!</h3>
+		<div className="">
+			<Home />
 		</div>
 	);
 }
