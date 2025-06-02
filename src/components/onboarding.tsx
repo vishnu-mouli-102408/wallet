@@ -8,6 +8,8 @@ import StepThree from "./steps/step-three";
 import StepFour from "./steps/step-four";
 import { useConfirmPassword } from "@/store";
 import { usePassword } from "@/store";
+import { generateMnemonicWords } from "@/lib/utils";
+import { useGlobalActions } from "@/store";
 
 const steps = ["Introduction", "Security", "Features", "Launch"];
 
@@ -57,7 +59,7 @@ const stepData = [
 
 export const OnboardingVariant: React.FC = () => {
 	const [currentStep, setCurrentStep] = useState(0);
-
+	const { setMnemonicWords } = useGlobalActions();
 	const nextStep = async () => {
 		if (currentStep === 2 && password && confirmPassword && password === confirmPassword) {
 			// Hash password before storing in local storage
@@ -66,6 +68,10 @@ export const OnboardingVariant: React.FC = () => {
 			const hashArray = Array.from(new Uint8Array(hashedPassword));
 			const hashBase64 = btoa(hashArray.map((b) => String.fromCharCode(b)).join(""));
 			localStorage.setItem("password", hashBase64);
+			const words = generateMnemonicWords();
+			localStorage.setItem("mnemonicWords", JSON.stringify(words));
+			setMnemonicWords(words);
+			console.log("WORDS", words);
 		}
 
 		if (currentStep < steps.length - 1) {

@@ -18,6 +18,13 @@ const StepThree = () => {
 	const password = usePassword();
 	const confirmPassword = useConfirmPassword();
 
+	useEffect(() => {
+		const password = localStorage.getItem("password");
+		if (password) {
+			localStorage.removeItem("password");
+		}
+	}, []);
+
 	const validatePassword = (pass: string): string | undefined => {
 		if (pass.length < 8) {
 			return "Password must be at least 8 characters long";
