@@ -26,7 +26,6 @@ export interface Wallet {
 	id: string;
 	name: string;
 	network: string;
-	balance: string;
 	address: string;
 	networkIcon: string;
 	privateKey: string;
@@ -93,6 +92,12 @@ export function addSolanaWallet() {
 	const data = loadWalletData(storedPassword) || { solana: [], ethereum: [] };
 	const walletNumber = getNextWalletNumber(data.solana);
 	const keypair = generatePublicPrivateKeyPair("solana", walletNumber);
+	if (!keypair) {
+		toast.error("No keypair found", {
+			description: "Please create a seed phrase to add a wallet. Contact support if you need help.",
+		});
+		return;
+	}
 	addSolanaKeyPair(keypair.publicKey, keypair.privateKey, storedPassword);
 }
 
@@ -115,5 +120,11 @@ export function addEthereumWallet() {
 	const data = loadWalletData(storedPassword) || { solana: [], ethereum: [] };
 	const walletNumber = getNextWalletNumber(data.ethereum);
 	const keypair = generatePublicPrivateKeyPair("ethereum", walletNumber);
-	addEthereumKeyPair(keypair.publicKey, keypair.privateKey, storedPassword);
+	if (!keypair) {
+		toast.error("No keypair found", {
+			description: "Please create a seed phrase to add a wallet. Contact support if you need help.",
+		});
+		return;
+	}
+	addEthereumKeyPair(keypair?.address ?? keypair.publicKey, keypair.privateKey, storedPassword);
 }

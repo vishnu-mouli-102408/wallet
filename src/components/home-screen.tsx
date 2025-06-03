@@ -17,6 +17,7 @@ const HomeScreen = () => {
 	const selectedWallet = wallets.find((w) => w.id === selectedWalletId) || wallets[0];
 	const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 	const [isCopied, setIsCopied] = useState(false);
+	const [balance, setBalance] = useState<number>(0);
 
 	const [isPrivateKeyVisible, setIsPrivateKeyVisible] = useState(false);
 	const [isPrivateKeyCopied, setIsPrivateKeyCopied] = useState(false);
@@ -40,7 +41,6 @@ const HomeScreen = () => {
 		setWallets(
 			refactoredWallets?.map((wallet) => ({
 				address: wallet.address,
-				balance: "0",
 				id: wallet.address,
 				name:
 					wallet.network === "solana"
@@ -52,6 +52,7 @@ const HomeScreen = () => {
 			}))
 		);
 		setSelectedWalletId(refactoredWallets[0].address);
+		setBalance(0); // TODO: Get balance from API
 	}, []);
 
 	const handleAddWallet = (network: Network) => {
@@ -73,7 +74,6 @@ const HomeScreen = () => {
 		setWallets(
 			refactoredWallets?.map((wallet) => ({
 				address: wallet.address,
-				balance: "0",
 				id: wallet.address,
 				name:
 					wallet.network === "solana"
@@ -203,7 +203,7 @@ const HomeScreen = () => {
 						<div className="mb-2">
 							{isBalanceVisible ? (
 								<span className="text-3xl font-bold text-white">
-									{selectedWallet.balance} {selectedWallet.network === "solana" ? "SOL" : "ETH"}
+									{balance} {selectedWallet.network === "solana" ? "SOL" : "ETH"}
 								</span>
 							) : (
 								<span className="text-3xl font-bold text-white">****</span>

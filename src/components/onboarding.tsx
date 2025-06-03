@@ -10,8 +10,9 @@ import { useConfirmPassword, useNetwork } from "@/store";
 import { usePassword } from "@/store";
 import { generateMnemonicWords, generatePublicPrivateKeyPair } from "@/lib/utils";
 import { useGlobalActions } from "@/store";
-import { addSolanaKeyPair } from "@/lib/wallet";
+import { addEthereumKeyPair, addSolanaKeyPair } from "@/lib/wallet";
 import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 
 const steps = ["Introduction", "Security", "Features", "Launch"];
 
@@ -74,14 +75,30 @@ export const OnboardingVariant: React.FC = () => {
 			localStorage.setItem("password", hashBase64);
 			const { words, seedPhrase } = generateMnemonicWords();
 			// store seed phrase in local storage
-			localStorage.setItem("seedPhrase", seedPhrase.toString("hex"));
+			localStorage.setItem("seedPhrase", seedPhrase);
 			setMnemonicWords(words);
 		}
 
 		if (currentStep === 3) {
 			const keypair = generatePublicPrivateKeyPair(network, 0);
-			const storedPassword = localStorage.getItem("password") ?? "PASSWORD";
-			addSolanaKeyPair(keypair.publicKey, keypair.privateKey, storedPassword);
+			if (!keypair) {
+				toast.error("No keypair found", {
+					description: "Please create a seed phrase to add a wallet. Contact support if you need help.",
+				});
+				return;
+			}
+			const storedPassword = localStorage.getItem("password");
+			if (!storedPassword) {
+				toast.error("No password found", {
+					description: "Please create a password to add a wallet. Contact support if you need help.",
+				});
+				return;
+			}
+			if (network === "solana") {
+				addSolanaKeyPair(keypair.publicKey, keypair.privateKey, storedPassword);
+			} else if (network === "ethereum") {
+				addEthereumKeyPair(keypair?.address ?? keypair.publicKey, keypair.privateKey, storedPassword);
+			}
 			localStorage.setItem("onboarding-finished", "true");
 			navigate({ to: "/" });
 		}
