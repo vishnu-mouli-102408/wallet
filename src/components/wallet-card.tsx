@@ -29,10 +29,6 @@ export const WalletCard: React.FC<WalletCardProps> = ({ wallet, isSelected, onCl
 				</div>
 
 				<div className="flex items-center space-x-3">
-					<div className="text-right">
-						<div className="text-white font-medium text-sm">{wallet.balance}</div>
-					</div>
-
 					{isSelected && (
 						<motion.div
 							className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center"
