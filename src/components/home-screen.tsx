@@ -3,12 +3,14 @@ import { ArrowDownLeft, ArrowUpRight, Check, Copy, Eye, EyeOff, Plus, QrCode, Se
 import { motion } from "motion/react";
 
 import { Settings } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AddWalletModal } from "./add-wallet-modal";
 import { WalletCard } from "./wallet-card";
 import { addEthereumWallet, addSolanaWallet, loadWalletData, type Network, type Wallet } from "@/lib/wallet";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "./ui/select";
 import { toast } from "sonner";
+import { getEthereumWalletBalance, getSolanaWalletBalance } from "@/lib/transactions";
+import { PublicKey } from "@solana/web3.js";
 
 const HomeScreen = () => {
 	const [showNetworkSelector, setShowNetworkSelector] = useState(false);
@@ -18,7 +20,7 @@ const HomeScreen = () => {
 	const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 	const [isCopied, setIsCopied] = useState(false);
 	const [balance, setBalance] = useState<number>(0);
-
+	const [isBalanceLoading, setIsBalanceLoading] = useState(false);
 	const [isPrivateKeyVisible, setIsPrivateKeyVisible] = useState(false);
 	const [isPrivateKeyCopied, setIsPrivateKeyCopied] = useState(false);
 
@@ -33,6 +35,29 @@ const HomeScreen = () => {
 		setIsPrivateKeyCopied(true);
 		setTimeout(() => setIsPrivateKeyCopied(false), 2000);
 	};
+
+	const getBalance = useCallback(async () => {
+		try {
+			setBalance(0);
+			if (!selectedWallet) return;
+			setIsBalanceLoading(true);
+			if (selectedWallet.network === "solana") {
+				const balance = await getSolanaWalletBalance(new PublicKey(selectedWallet.address));
+				setBalance(Number(balance?.toFixed(2) ?? 0));
+			} else if (selectedWallet.network === "ethereum") {
+				const balance = await getEthereumWalletBalance(selectedWallet.address);
+				setBalance(Number(balance ?? 0));
+			}
+		} catch (error) {
+			console.error("Error fetching balance:", error);
+		} finally {
+			setIsBalanceLoading(false);
+		}
+	}, [selectedWallet]);
+
+	useEffect(() => {
+		getBalance();
+	}, [getBalance]);
 
 	useEffect(() => {
 		const password = localStorage.getItem("password") ?? "PASSWORD";
@@ -52,7 +77,6 @@ const HomeScreen = () => {
 			}))
 		);
 		setSelectedWalletId(refactoredWallets[0].address);
-		setBalance(0); // TODO: Get balance from API
 	}, []);
 
 	const handleAddWallet = (network: Network) => {
@@ -203,7 +227,15 @@ const HomeScreen = () => {
 						<div className="mb-2">
 							{isBalanceVisible ? (
 								<span className="text-3xl font-bold text-white">
-									{balance} {selectedWallet.network === "solana" ? "SOL" : "ETH"}
+									{isBalanceLoading ? (
+										<div className="flex items-center justify-center">
+											<div className="h-8 w-32 bg-gray-700 animate-pulse rounded"></div>
+										</div>
+									) : (
+										<>
+											{balance} {selectedWallet.network === "solana" ? "SOL" : "ETH"}
+										</>
+									)}
 								</span>
 							) : (
 								<span className="text-3xl font-bold text-white">****</span>

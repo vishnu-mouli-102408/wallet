@@ -76,7 +76,7 @@ const PasswordScreen = ({ setIsUnlocked }: PasswordScreenProps) => {
 							variant="ghost"
 							size="icon"
 							onClick={() => setShowPassword(!showPassword)}
-							className="absolute right-2 top-1/2 hover:bg-transparent hover:text-yellow-500 -translate-y-1/2"
+							className={`absolute right-2 ${error ? "top-[30%]" : "top-1/2"} hover:bg-transparent hover:text-yellow-500 -translate-y-1/2`}
 						>
 							{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
 						</Button>
