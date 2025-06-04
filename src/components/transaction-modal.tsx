@@ -64,12 +64,12 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ onClose, sel
 			}
 			setIsLoading(true);
 			if (selectedWallet.network === "solana") {
-				const secretKeyUint8Array = new Uint8Array(selectedWallet.privateKey.split(",").map((num) => parseInt(num)));
-				const result = await sendSolanaTransaction(new PublicKey(address), amount, secretKeyUint8Array);
+				const result = await sendSolanaTransaction(new PublicKey(address), amount, selectedWallet.privateKey);
 				if (result.success) {
 					toast.success("Transaction sent successfully", {
 						description: "Transaction sent successfully",
 					});
+					onClose();
 				} else {
 					toast.error(result.message, {
 						description: "Please try again. Contact support if you need help.",
@@ -138,7 +138,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ onClose, sel
 								id="amount"
 								type={"number"}
 								value={amount ?? ""}
-								pattern="^[0-9]*$"
+								pattern="^[0-9]*\.?[0-9]*$"
+								step="any"
 								onChange={(e) => {
 									setAmount(Number(e.target.value));
 								}}
