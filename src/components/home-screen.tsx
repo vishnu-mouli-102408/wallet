@@ -11,9 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "./ui/select";
 import { toast } from "sonner";
 import { getEthereumWalletBalance, getSolanaWalletBalance } from "@/lib/transactions";
 import { PublicKey } from "@solana/web3.js";
+import { TransactionModal } from "./transaction-modal";
 
 const HomeScreen = () => {
 	const [showNetworkSelector, setShowNetworkSelector] = useState(false);
+	const [showTransactionModal, setShowTransactionModal] = useState(false);
 	const [wallets, setWallets] = useState<Wallet[]>([]);
 	const [selectedWalletId, setSelectedWalletId] = useState<string>("");
 	const selectedWallet = wallets.find((w) => w.id === selectedWalletId) || wallets[0];
@@ -295,6 +297,7 @@ const HomeScreen = () => {
 					className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl p-4 flex flex-col items-center space-y-2"
 					whileHover={{ scale: 1.02 }}
 					whileTap={{ scale: 0.98 }}
+					onClick={() => setShowTransactionModal(true)}
 				>
 					<Send className="w-6 h-6 text-white" />
 					<span className="text-white text-sm font-medium">Send</span>
@@ -328,10 +331,12 @@ const HomeScreen = () => {
 				<AddWalletModal
 					onClose={() => setShowNetworkSelector(false)}
 					onSelectNetwork={(network) => {
-						console.log("NETWORK", network);
 						handleAddWallet(network);
 					}}
 				/>
+			)}
+			{showTransactionModal && (
+				<TransactionModal selectedWallet={selectedWallet} onClose={() => setShowTransactionModal(false)} />
 			)}
 		</div>
 	);
