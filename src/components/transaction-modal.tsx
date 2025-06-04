@@ -11,9 +11,10 @@ import { PublicKey } from "@solana/web3.js";
 interface TransactionModalProps {
 	onClose: () => void;
 	selectedWallet: Wallet;
+	getBalance: () => Promise<void>;
 }
 
-export const TransactionModal: React.FC<TransactionModalProps> = ({ onClose, selectedWallet }) => {
+export const TransactionModal: React.FC<TransactionModalProps> = ({ onClose, selectedWallet, getBalance }) => {
 	const [amount, setAmount] = useState<number | null>(null);
 	const [address, setAddress] = useState<string>("");
 	const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +71,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ onClose, sel
 						description: "Transaction sent successfully",
 					});
 					onClose();
+					await getBalance();
 				} else {
 					toast.error(result.message, {
 						description: "Please try again. Contact support if you need help.",

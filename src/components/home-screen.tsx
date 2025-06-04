@@ -336,7 +336,11 @@ const HomeScreen = () => {
 				/>
 			)}
 			{showTransactionModal && (
-				<TransactionModal selectedWallet={selectedWallet} onClose={() => setShowTransactionModal(false)} />
+				<TransactionModal
+					getBalance={getBalance}
+					selectedWallet={selectedWallet}
+					onClose={() => setShowTransactionModal(false)}
+				/>
 			)}
 		</div>
 	);
