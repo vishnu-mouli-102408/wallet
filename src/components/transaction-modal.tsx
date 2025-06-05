@@ -7,6 +7,7 @@ import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { sendSolanaTransaction } from "@/lib/transactions";
 import { PublicKey } from "@solana/web3.js";
+import TransactionSuccessModal from "./transaction-success-modal";
 
 interface TransactionModalProps {
 	onClose: () => void;
@@ -19,6 +20,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ onClose, sel
 	const [address, setAddress] = useState<string>("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [addressError, setAddressError] = useState<string | null>(null);
+	const [showSuccessModal, setShowSuccessModal] = useState(false);
 
 	const isValidSolanaAddress = (address: string) => {
 		return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
@@ -67,10 +69,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ onClose, sel
 			if (selectedWallet.network === "solana") {
 				const result = await sendSolanaTransaction(new PublicKey(address), amount, selectedWallet.privateKey);
 				if (result.success) {
-					toast.success("Transaction sent successfully", {
-						description: "Transaction sent successfully",
-					});
-					onClose();
+					setShowSuccessModal(true);
 					await getBalance();
 				} else {
 					toast.error(result.message, {
@@ -165,6 +164,15 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ onClose, sel
 					</div>
 				</motion.div>
 			</motion.div>
+			<AnimatePresence>
+				{showSuccessModal && (
+					<TransactionSuccessModal
+						onCloseTransactionModal={onClose}
+						isOpen={showSuccessModal}
+						onClose={() => setShowSuccessModal(false)}
+					/>
+				)}
+			</AnimatePresence>
 		</AnimatePresence>
 	);
 };
