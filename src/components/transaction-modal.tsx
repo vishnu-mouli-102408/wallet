@@ -5,7 +5,7 @@ import type { Wallet } from "@/lib/wallet";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
-import { sendSolanaTransaction } from "@/lib/transactions";
+import { sendEthereumTransaction, sendSolanaTransaction } from "@/lib/transactions";
 import { PublicKey } from "@solana/web3.js";
 import TransactionSuccessModal from "./transaction-success-modal";
 
@@ -68,6 +68,16 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ onClose, sel
 			setIsLoading(true);
 			if (selectedWallet.network === "solana") {
 				const result = await sendSolanaTransaction(new PublicKey(address), amount, selectedWallet.privateKey);
+				if (result.success) {
+					setShowSuccessModal(true);
+					await getBalance();
+				} else {
+					toast.error(result.message, {
+						description: "Please try again. Contact support if you need help.",
+					});
+				}
+			} else if (selectedWallet.network === "ethereum") {
+				const result = await sendEthereumTransaction(address, amount, selectedWallet.privateKey);
 				if (result.success) {
 					setShowSuccessModal(true);
 					await getBalance();

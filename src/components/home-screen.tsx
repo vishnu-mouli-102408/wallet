@@ -48,7 +48,8 @@ const HomeScreen = () => {
 				setBalance(Number(balance?.toFixed(2) ?? 0));
 			} else if (selectedWallet.network === "ethereum") {
 				const balance = await getEthereumWalletBalance(selectedWallet.address);
-				setBalance(Number(balance ?? 0));
+				const refactoredBalance = Number(balance ?? 0).toFixed(5);
+				setBalance(Number(refactoredBalance));
 			}
 		} catch (error) {
 			console.error("Error fetching balance:", error);
@@ -114,6 +115,7 @@ const HomeScreen = () => {
 	};
 
 	console.log("WALLETS", wallets);
+	console.log("BALANCE", balance);
 
 	if (wallets.length === 0) {
 		return (

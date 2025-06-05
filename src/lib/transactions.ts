@@ -1,6 +1,6 @@
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { toast } from "sonner";
-import { formatEther } from "ethers";
+import { ethers, formatEther } from "ethers";
 
 const SOLANA_RPC_URL = "https://solana-devnet.g.alchemy.com/v2";
 const ETHEREUM_RPC_URL = "https://eth-sepolia.g.alchemy.com/v2";
@@ -127,6 +127,52 @@ export const sendSolanaTransaction = async (receiverPublicKey: PublicKey, amount
 			data: null,
 			success: false,
 			message: error instanceof Error ? error.message : "Error sending solana transaction",
+		};
+	}
+};
+
+export const sendEthereumTransaction = async (receiverAddress: string, amount: number, senderSecretKey: string) => {
+	try {
+		console.log("🔄 Sending ethereum transaction to", receiverAddress, "with amount", amount);
+		const url = `${ETHEREUM_RPC_URL}/${import.meta.env.VITE_ALCHEMY_API_KEY}`;
+		const provider = new ethers.JsonRpcProvider(url);
+		const wallet = new ethers.Wallet(senderSecretKey, provider);
+		const senderAddress = await wallet.getAddress();
+		const balance = await provider.getBalance(senderAddress);
+		const requiredAmount = ethers.parseEther(amount.toString());
+		if (balance < requiredAmount) {
+			return {
+				data: null,
+				success: false,
+				message: "Insufficient balance",
+			};
+		}
+		const tx = await wallet.sendTransaction({
+			to: receiverAddress,
+			value: requiredAmount,
+		});
+		console.log("🔄 Sending tx:", tx.hash);
+		const receipt = await tx.wait();
+		if (!receipt) {
+			console.warn("⚠️ Transaction may have been sent but not confirmed in time.");
+			return {
+				data: tx.hash,
+				success: false,
+				message: "Transaction sent but not confirmed in time",
+			};
+		}
+		console.log("✅ Transaction confirmed:", await receipt.getTransaction());
+		return {
+			data: await receipt.getTransaction(),
+			success: true,
+			message: "Transaction sent successfully",
+		};
+	} catch (error) {
+		console.error("❌ Error sending ethereum transaction", error);
+		return {
+			data: null,
+			success: false,
+			message: error instanceof Error ? error.message : "Error sending ethereum transaction",
 		};
 	}
 };
