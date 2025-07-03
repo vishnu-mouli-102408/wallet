@@ -2,12 +2,13 @@ import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transa
 import { toast } from "sonner";
 import { ethers, formatEther } from "ethers";
 
-const SOLANA_RPC_URL = "https://solana-devnet.g.alchemy.com/v2";
+// const SOLANA_RPC_URL = `https://solana-devnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_API_KEY}`;
+const SOLANA_RPC_URL = "https://api.devnet.solana.com";
 const ETHEREUM_RPC_URL = "https://eth-sepolia.g.alchemy.com/v2";
 
 export const getSolanaWalletBalance = async (publicKey: PublicKey) => {
 	try {
-		const url = `${SOLANA_RPC_URL}/${import.meta.env.VITE_ALCHEMY_API_KEY}`;
+		const url = SOLANA_RPC_URL;
 		const connection = new Connection(url, "confirmed");
 		const balance = await connection.getBalance(publicKey);
 		return balance / LAMPORTS_PER_SOL;
@@ -16,6 +17,19 @@ export const getSolanaWalletBalance = async (publicKey: PublicKey) => {
 		toast.error("Error getting solana wallet balance", {
 			description: "Please try again. Contact support if you need help.",
 		});
+		return null;
+	}
+};
+
+export const airdropSolana = async (address: PublicKey, amount: number) => {
+	try {
+		const url = SOLANA_RPC_URL;
+		const connection = new Connection(url, "confirmed");
+		const airdropSignature = await connection.requestAirdrop(address, amount * LAMPORTS_PER_SOL);
+		await connection.confirmTransaction(airdropSignature);
+		return airdropSignature;
+	} catch (error) {
+		console.error("Error airdropping solana", error);
 		return null;
 	}
 };
@@ -62,7 +76,7 @@ function hexToUint8Array(hex: string): Uint8Array {
 
 export const sendSolanaTransaction = async (receiverPublicKey: PublicKey, amount: number, senderSecretKey: string) => {
 	try {
-		const url = `${SOLANA_RPC_URL}/${import.meta.env.VITE_ALCHEMY_API_KEY}`;
+		const url = SOLANA_RPC_URL;
 		const connection = new Connection(url, "confirmed");
 		const secretKey = hexToUint8Array(senderSecretKey);
 		const secret = Keypair.fromSecretKey(secretKey);

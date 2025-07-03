@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, Check, Copy, Eye, EyeOff, Plus, QrCode, Send } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Check, Copy, Eye, EyeOff, Plus, Send } from "lucide-react";
 
 import { motion } from "motion/react";
 
@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { getEthereumWalletBalance, getSolanaWalletBalance } from "@/lib/transactions";
 import { PublicKey } from "@solana/web3.js";
 import { TransactionModal } from "./transaction-modal";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import AirdropModal from "./airdrop-modal";
 
 const HomeScreen = () => {
 	const [showNetworkSelector, setShowNetworkSelector] = useState(false);
@@ -25,6 +27,8 @@ const HomeScreen = () => {
 	const [isBalanceLoading, setIsBalanceLoading] = useState(false);
 	const [isPrivateKeyVisible, setIsPrivateKeyVisible] = useState(false);
 	const [isPrivateKeyCopied, setIsPrivateKeyCopied] = useState(false);
+
+	const [showAirdropModal, setShowAirdropModal] = useState(false);
 
 	const copyAddress = () => {
 		navigator.clipboard.writeText(selectedWallet.address);
@@ -143,13 +147,28 @@ const HomeScreen = () => {
 					</div>
 
 					<div className="flex items-center space-x-2">
-						<motion.button
-							className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center"
-							whileHover={{ scale: 1.05 }}
-							whileTap={{ scale: 0.95 }}
-						>
-							<QrCode className="w-4 h-4 text-gray-400" />
-						</motion.button>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<motion.button
+									onClick={() => {
+										if (selectedWallet?.network === "ethereum") {
+											toast.error("Airdrop is not available for Ethereum");
+											return;
+										}
+										setShowAirdropModal(true);
+									}}
+									className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center"
+									whileHover={{ scale: 1.05 }}
+									whileTap={{ scale: 0.95 }}
+								>
+									<img src="/snapdrop.svg" alt="airdrop" width={16} height={16} className="text-gray-400" />
+								</motion.button>
+							</TooltipTrigger>
+							<TooltipContent side="bottom">
+								<p>Airdrop</p>
+							</TooltipContent>
+						</Tooltip>
+
 						<motion.button
 							className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center"
 							whileHover={{ scale: 1.05 }}
@@ -343,6 +362,9 @@ const HomeScreen = () => {
 					selectedWallet={selectedWallet}
 					onClose={() => setShowTransactionModal(false)}
 				/>
+			)}
+			{showAirdropModal && (
+				<AirdropModal callback={getBalance} open={showAirdropModal} onClose={() => setShowAirdropModal(false)} />
 			)}
 		</div>
 	);
