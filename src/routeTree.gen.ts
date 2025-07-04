@@ -13,6 +13,7 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as IndexImport } from './routes/index'
 import { Route as OnboardingIndexImport } from './routes/onboarding/index'
+import { Route as LaunchpadIndexImport } from './routes/launchpad/index'
 
 // Create/Update Routes
 
@@ -28,6 +29,12 @@ const OnboardingIndexRoute = OnboardingIndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const LaunchpadIndexRoute = LaunchpadIndexImport.update({
+  id: '/launchpad/',
+  path: '/launchpad/',
+  getParentRoute: () => rootRoute,
+} as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -37,6 +44,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/launchpad/': {
+      id: '/launchpad/'
+      path: '/launchpad'
+      fullPath: '/launchpad'
+      preLoaderRoute: typeof LaunchpadIndexImport
       parentRoute: typeof rootRoute
     }
     '/onboarding/': {
@@ -53,36 +67,41 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/launchpad': typeof LaunchpadIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/launchpad': typeof LaunchpadIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/launchpad/': typeof LaunchpadIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/onboarding'
+  fullPaths: '/' | '/launchpad' | '/onboarding'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/onboarding'
-  id: '__root__' | '/' | '/onboarding/'
+  to: '/' | '/launchpad' | '/onboarding'
+  id: '__root__' | '/' | '/launchpad/' | '/onboarding/'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LaunchpadIndexRoute: typeof LaunchpadIndexRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LaunchpadIndexRoute: LaunchpadIndexRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
 }
 
@@ -97,11 +116,15 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/launchpad/",
         "/onboarding/"
       ]
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/launchpad/": {
+      "filePath": "launchpad/index.tsx"
     },
     "/onboarding/": {
       "filePath": "onboarding/index.tsx"

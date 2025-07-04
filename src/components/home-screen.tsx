@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, Check, Copy, Eye, EyeOff, Plus, Send } from "lucide-react";
+import { ArrowDownLeft, Check, Copy, Eye, EyeOff, PanelTopDashed, Plus, Send } from "lucide-react";
 
 import { motion } from "motion/react";
 
@@ -9,11 +9,12 @@ import { WalletCard } from "./wallet-card";
 import { addEthereumWallet, addSolanaWallet, loadWalletData, type Network, type Wallet } from "@/lib/wallet";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "./ui/select";
 import { toast } from "sonner";
-import { getEthereumWalletBalance, getSolanaWalletBalance } from "@/lib/transactions";
+import { getEthereumWalletBalance, getSolanaTokens, getSolanaWalletBalance } from "@/lib/transactions";
 import { PublicKey } from "@solana/web3.js";
 import { TransactionModal } from "./transaction-modal";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import AirdropModal from "./airdrop-modal";
+import { useNavigate } from "@tanstack/react-router";
 
 const HomeScreen = () => {
 	const [showNetworkSelector, setShowNetworkSelector] = useState(false);
@@ -29,6 +30,7 @@ const HomeScreen = () => {
 	const [isPrivateKeyCopied, setIsPrivateKeyCopied] = useState(false);
 
 	const [showAirdropModal, setShowAirdropModal] = useState(false);
+	const navigate = useNavigate();
 
 	const copyAddress = () => {
 		navigator.clipboard.writeText(selectedWallet.address);
@@ -49,6 +51,8 @@ const HomeScreen = () => {
 			setIsBalanceLoading(true);
 			if (selectedWallet.network === "solana") {
 				const balance = await getSolanaWalletBalance(new PublicKey(selectedWallet.address));
+				const res = await getSolanaTokens(new PublicKey(selectedWallet?.address));
+				console.log("RES", res);
 				setBalance(Number(balance?.toFixed(2) ?? 0));
 			} else if (selectedWallet.network === "ethereum") {
 				const balance = await getEthereumWalletBalance(selectedWallet.address);
@@ -341,11 +345,11 @@ const HomeScreen = () => {
 					whileHover={{ scale: 1.02 }}
 					whileTap={{ scale: 0.98 }}
 					onClick={() => {
-						toast.info("Coming soon");
+						navigate({ to: "/launchpad" });
 					}}
 				>
-					<ArrowUpRight className="w-6 h-6 text-white" />
-					<span className="text-white text-sm font-medium">Swap</span>
+					<PanelTopDashed className="w-6 h-6 text-white" />
+					<span className="text-white text-sm font-medium">Launchpad</span>
 				</motion.button>
 			</motion.div>
 			{showNetworkSelector && (

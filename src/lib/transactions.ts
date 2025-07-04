@@ -21,6 +21,23 @@ export const getSolanaWalletBalance = async (publicKey: PublicKey) => {
 	}
 };
 
+export const getSolanaTokens = async (publicKey: PublicKey) => {
+	try {
+		const url = SOLANA_RPC_URL;
+		const connection = new Connection(url, "confirmed");
+		const tokenAccounts = await connection.getTokenAccountsByOwner(publicKey, {
+			programId: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
+		});
+		return tokenAccounts;
+	} catch (error) {
+		console.error("Error getting solana tokens", error);
+		toast.error("Error getting solana tokens", {
+			description: "Please try again. Contact support if you need help.",
+		});
+		return null;
+	}
+};
+
 export const airdropSolana = async (address: PublicKey, amount: number) => {
 	try {
 		const url = SOLANA_RPC_URL;
@@ -63,7 +80,7 @@ export const getEthereumWalletBalance = async (address: string) => {
 	}
 };
 
-function hexToUint8Array(hex: string): Uint8Array {
+export function hexToUint8Array(hex: string): Uint8Array {
 	if (hex.length % 2 !== 0) {
 		throw new Error("Invalid hex string");
 	}
