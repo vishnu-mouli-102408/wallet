@@ -17,7 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, Wallet, Coins, Copy, RefreshCw, Check } from "lucide-react";
 import { loadWalletData, type Wallet as WalletType } from "@/lib/wallet";
-import { getSolanaTokens, hexToUint8Array } from "@/lib/transactions";
+import { hexToUint8Array } from "@/lib/transactions";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { Textarea } from "./ui/textarea";
 import { z } from "zod";
@@ -26,20 +26,28 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { createToken } from "@/lib/token";
 import {
-	AccountLayout,
-	createInitializeMint2Instruction,
-	getMinimumBalanceForRentExemptMint,
-	MINT_SIZE,
+	createAssociatedTokenAccountInstruction,
+	createInitializeMetadataPointerInstruction,
+	createInitializeMintInstruction,
+	createMintToInstruction,
+	ExtensionType,
+	getAssociatedTokenAddressSync,
+	getMintLen,
+	getTokenMetadata,
+	LENGTH_SIZE,
 	TOKEN_2022_PROGRAM_ID,
+	TYPE_SIZE,
 } from "@solana/spl-token";
 import { WalletDisconnectButton, WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { createInitializeInstruction, pack } from "@solana/spl-token-metadata";
 
 // Types for Solana tokens
 interface SolanaToken {
 	mint: string;
 	symbol: string;
 	supply: number;
+	name: string;
 }
 
 const createTokenFormSchema = z.object({
@@ -137,29 +145,103 @@ const Launchpad = () => {
 		console.log("Parsed Data", parsedData);
 		try {
 			setIsLoading(true);
+			// Create a new mint
 			const mintKeypair = Keypair.generate();
-			const lamports = await getMinimumBalanceForRentExemptMint(connection);
+			// Create a new metadata pointer
+			const metadata = {
+				mint: mintKeypair.publicKey,
+				name: parsedData?.data?.name,
+				symbol: parsedData?.data?.symbol,
+				uri: "https://res.cloudinary.com/dmlghnnuk/image/upload/v1742748575/expert-link/vjpwbxpumorw8dybdpnx.jpg",
+				additionalMetadata: [],
+			};
+			// Get the mint length and metadata length
+			const mintLen = getMintLen([ExtensionType.MetadataPointer]);
+			const metadataLen = TYPE_SIZE + LENGTH_SIZE + pack(metadata).length;
+			// Get the minimum balance for rent exemption
+			const lamports = await connection.getMinimumBalanceForRentExemption(mintLen + metadataLen);
+			// Create a new transaction
 			const transaction = new Transaction().add(
 				SystemProgram.createAccount({
 					fromPubkey: wallet.publicKey,
 					newAccountPubkey: mintKeypair.publicKey,
-					space: MINT_SIZE,
+					space: mintLen,
 					lamports,
 					programId: TOKEN_2022_PROGRAM_ID,
 				}),
-				createInitializeMint2Instruction(
+				// Initialize the metadata pointer
+				createInitializeMetadataPointerInstruction(
 					mintKeypair.publicKey,
-					9,
 					wallet.publicKey,
+					mintKeypair.publicKey,
+					TOKEN_2022_PROGRAM_ID
+				),
+				// Initialize the mint
+				createInitializeMintInstruction(mintKeypair.publicKey, 9, wallet.publicKey, null, TOKEN_2022_PROGRAM_ID),
+				// Initialize the metadata
+				createInitializeInstruction({
+					programId: TOKEN_2022_PROGRAM_ID,
+					mint: mintKeypair.publicKey,
+					metadata: mintKeypair.publicKey,
+					name: metadata.name,
+					symbol: metadata.symbol,
+					uri: metadata.uri,
+					mintAuthority: wallet.publicKey,
+					updateAuthority: wallet.publicKey,
+				})
+			);
+			// Set the fee payer
+			transaction.feePayer = wallet.publicKey;
+			// Set the recent blockhash
+			transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+			// Sign the transaction
+			transaction.partialSign(mintKeypair);
+			// Send the transaction
+			await wallet.sendTransaction(transaction, connection);
+			console.log(`Token mint created at ${mintKeypair.publicKey.toBase58()}`);
+			// Get the associated token address
+			const associatedToken = getAssociatedTokenAddressSync(
+				mintKeypair.publicKey,
+				wallet.publicKey,
+				false,
+				TOKEN_2022_PROGRAM_ID
+			);
+
+			console.log("Associated Token", associatedToken.toBase58());
+
+			// Create a new transaction for the associated token account
+			const transaction2 = new Transaction().add(
+				createAssociatedTokenAccountInstruction(
 					wallet.publicKey,
+					associatedToken,
+					wallet.publicKey,
+					mintKeypair.publicKey,
 					TOKEN_2022_PROGRAM_ID
 				)
 			);
-			transaction.feePayer = wallet.publicKey;
-			transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-			transaction.partialSign(mintKeypair);
-			await wallet.sendTransaction(transaction, connection);
-			console.log(`Token mint created at ${mintKeypair.publicKey.toBase58()}`);
+
+			// Send the transaction
+			await wallet.sendTransaction(transaction2, connection);
+
+			// Get the amount to mint
+			const amount = BigInt(parsedData?.data?.supply) * BigInt(10 ** parsedData?.data?.decimals);
+
+			// Create a new transaction for the mint
+			const transaction3 = new Transaction().add(
+				createMintToInstruction(
+					mintKeypair.publicKey,
+					associatedToken,
+					wallet.publicKey,
+					amount,
+					[],
+					TOKEN_2022_PROGRAM_ID
+				)
+			);
+
+			// Send the transaction
+			await wallet.sendTransaction(transaction3, connection);
+			console.log("Minted!");
+
 			setShowCreateToken(false);
 			form.reset();
 			toast.success("Token created successfully");
@@ -199,34 +281,41 @@ const Launchpad = () => {
 
 		setIsLoading(true);
 		try {
-			const tokens = await getSolanaTokens(
-				selectedWalletOption === "connect" && wallet.publicKey?.toBase58()
-					? wallet?.publicKey
-					: new PublicKey(selectedWallet?.address)
-			);
-			console.log("Tokens", tokens);
-			const balances = tokens?.value?.map((accountInfo) => {
+			// const tokens = await getSolanaTokens(new PublicKey(selectedWallet?.address));
+			// Get the tokens
+			const tokens = await connection.getParsedTokenAccountsByOwner(new PublicKey(selectedWallet.address), {
+				programId: TOKEN_2022_PROGRAM_ID,
+			});
+
+			// Get the balances
+			const balances = tokens?.value?.map(async (accountInfo) => {
 				const buffer = accountInfo.account.data;
-				const decoded = AccountLayout.decode(buffer);
-				const mint = decoded.mint.toBase58();
-				const supply = Number(decoded.amount.toString()) / LAMPORTS_PER_SOL;
-				const symbol = decoded.state.toString();
+				const decoded = buffer;
+				const mint = decoded.parsed.info.mint as string;
+				const supply = Number(decoded.parsed.info.tokenAmount.amount) / LAMPORTS_PER_SOL;
+				const metadata = await getTokenMetadata(connection, new PublicKey(mint));
+				console.log("Metadata", metadata);
+				const symbol = metadata?.symbol ?? "Unknown";
+				const name = metadata?.name ?? "Unknown";
 
 				return {
 					mint,
 					supply,
 					symbol,
+					name,
 				};
 			});
-			setTokens(balances ?? []);
-			console.log("Balances", balances);
+			// Wait for all promises to resolve before setting tokens
+			const resolvedBalances = await Promise.all(balances ?? []);
+			setTokens(resolvedBalances);
+			console.log("Balances", resolvedBalances);
 		} catch (error) {
 			console.error("Error loading tokens:", error);
 			toast.error("Failed to load tokens");
 		} finally {
 			setIsLoading(false);
 		}
-	}, [selectedWallet, selectedWalletOption, wallet?.publicKey]);
+	}, [connection, selectedWallet]);
 
 	useEffect(() => {
 		loadTokens();
@@ -595,7 +684,7 @@ const Launchpad = () => {
 								</div>
 							) : (
 								<div className="space-y-4">
-									{tokens.map((token, index) => (
+									{tokens.map((token) => (
 										<Card
 											key={token.mint}
 											className="bg-[#181e29] border border-[#23293a] rounded-xl px-4 py-3 flex items-center justify-between"
@@ -607,9 +696,9 @@ const Launchpad = () => {
 												</div>
 												<div className="min-w-0">
 													<div className="flex items-center space-x-2">
-														<span className="text-white font-semibold text-base">{index + 1 || "?"}</span>
+														<span className="text-white font-semibold text-base">{token.name}</span>
 														<span className="bg-[#2d2346] text-[#b39ddb] text-[10px] px-2 py-0.5 rounded font-medium">
-															SPL
+															{token.symbol}
 														</span>
 													</div>
 													<div className="flex items-center space-x-1 mt-0.5">
