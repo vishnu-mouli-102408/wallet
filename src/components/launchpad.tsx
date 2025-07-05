@@ -718,9 +718,9 @@ const Launchpad = () => {
 													</div>
 												</div>
 											</div>
-											{/* Right: Supply */}
+											{/* Right: Balance */}
 											<div className="flex flex-col items-end">
-												<span className="text-[#b0b8c9] text-xs font-medium mb-0.5">SUPPLY</span>
+												<span className="text-[#b0b8c9] text-xs font-medium mb-0.5">Balance</span>
 												<span className="text-white font-bold text-lg leading-none">
 													{token.supply.toLocaleString()}
 												</span>
