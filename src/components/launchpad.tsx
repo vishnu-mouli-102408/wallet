@@ -13,18 +13,27 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, Wallet, Coins, Copy, RefreshCw, Check } from "lucide-react";
 import { loadWalletData, type Wallet as WalletType } from "@/lib/wallet";
 import { getSolanaTokens, hexToUint8Array } from "@/lib/transactions";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { Textarea } from "./ui/textarea";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { createToken } from "@/lib/token";
-import { AccountLayout } from "@solana/spl-token";
+import {
+	AccountLayout,
+	createInitializeMint2Instruction,
+	getMinimumBalanceForRentExemptMint,
+	MINT_SIZE,
+	TOKEN_2022_PROGRAM_ID,
+} from "@solana/spl-token";
+import { WalletDisconnectButton, WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 
 // Types for Solana tokens
 interface SolanaToken {
@@ -47,6 +56,10 @@ const Launchpad = () => {
 	const [tokens, setTokens] = useState<SolanaToken[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [showCreateToken, setShowCreateToken] = useState(false);
+	const [selectedWalletOption, setSelectedWalletOption] = useState<"connect" | "select">("connect");
+
+	const { connection } = useConnection();
+	const wallet = useWallet();
 
 	// React Hook Form setup with Zod validation
 	const form = useForm<CreateTokenForm>({
@@ -64,7 +77,7 @@ const Launchpad = () => {
 		return `${address.slice(0, 4)}...${address.slice(-4)}`;
 	};
 
-	const handleCreateToken = async (data: CreateTokenForm) => {
+	const handleCreateTokenBySelectedWallet = async (data: CreateTokenForm) => {
 		const parsedData = createTokenFormSchema.safeParse(data);
 		if (!parsedData.success) {
 			toast.error(parsedData.error.message);
@@ -92,8 +105,7 @@ const Launchpad = () => {
 			if (token?.success) {
 				setShowCreateToken(false);
 				form.reset();
-
-				loadTokens();
+				await loadTokens();
 				toast.success(token?.message);
 			} else {
 				toast.error("Oops! Something went wrong", {
@@ -107,6 +119,66 @@ const Launchpad = () => {
 			});
 		} finally {
 			setIsLoading(false);
+		}
+	};
+
+	const handleCreateTokenByConnectedWallet = async (data: CreateTokenForm) => {
+		const parsedData = createTokenFormSchema.safeParse(data);
+		if (!parsedData.success) {
+			toast.error(parsedData.error.message);
+			return;
+		}
+
+		if (!wallet?.publicKey) {
+			toast.warning("Please connect your wallet to create a token");
+			return;
+		}
+
+		console.log("Parsed Data", parsedData);
+		try {
+			setIsLoading(true);
+			const mintKeypair = Keypair.generate();
+			const lamports = await getMinimumBalanceForRentExemptMint(connection);
+			const transaction = new Transaction().add(
+				SystemProgram.createAccount({
+					fromPubkey: wallet.publicKey,
+					newAccountPubkey: mintKeypair.publicKey,
+					space: MINT_SIZE,
+					lamports,
+					programId: TOKEN_2022_PROGRAM_ID,
+				}),
+				createInitializeMint2Instruction(
+					mintKeypair.publicKey,
+					9,
+					wallet.publicKey,
+					wallet.publicKey,
+					TOKEN_2022_PROGRAM_ID
+				)
+			);
+			transaction.feePayer = wallet.publicKey;
+			transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+			transaction.partialSign(mintKeypair);
+			await wallet.sendTransaction(transaction, connection);
+			console.log(`Token mint created at ${mintKeypair.publicKey.toBase58()}`);
+			setShowCreateToken(false);
+			form.reset();
+			toast.success("Token created successfully");
+			await loadTokens();
+		} catch (error) {
+			console.error("Error creating token:", error);
+			toast.error("Failed to create token", {
+				description: "There was an error creating the token. Please try again.",
+			});
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	const onSubmit = async (data: CreateTokenForm) => {
+		if (selectedWalletOption === "connect") {
+			handleCreateTokenByConnectedWallet(data);
+		} else {
+			handleCreateTokenBySelectedWallet(data);
 		}
 	};
 
@@ -127,7 +199,11 @@ const Launchpad = () => {
 
 		setIsLoading(true);
 		try {
-			const tokens = await getSolanaTokens(new PublicKey(selectedWallet?.address));
+			const tokens = await getSolanaTokens(
+				selectedWalletOption === "connect" && wallet.publicKey?.toBase58()
+					? wallet?.publicKey
+					: new PublicKey(selectedWallet?.address)
+			);
 			console.log("Tokens", tokens);
 			const balances = tokens?.value?.map((accountInfo) => {
 				const buffer = accountInfo.account.data;
@@ -150,11 +226,13 @@ const Launchpad = () => {
 		} finally {
 			setIsLoading(false);
 		}
-	}, [selectedWallet]);
+	}, [selectedWallet, selectedWalletOption, wallet?.publicKey]);
 
 	useEffect(() => {
 		loadTokens();
 	}, [loadTokens, selectedWallet]);
+
+	// console.log("Wallet", wallet.publicKey?.toBase58());
 
 	useEffect(() => {
 		const password = localStorage.getItem("password") ?? "PASSWORD";
@@ -234,7 +312,7 @@ const Launchpad = () => {
 								</DialogDescription>
 							</DialogHeader>
 							<Form {...form}>
-								<form onSubmit={form.handleSubmit(handleCreateToken)} className="space-y-5 py-4">
+								<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
 									<div className="grid grid-cols-2 gap-4">
 										<FormField
 											control={form.control}
@@ -380,52 +458,84 @@ const Launchpad = () => {
 			>
 				<Card className="bg-gray-900/50 border-gray-800">
 					<CardHeader className="p-4">
-						<CardTitle className="text-white flex items-center">
-							<Wallet className="w-5 h-5 mr-2" />
-							Select Wallet
-						</CardTitle>
+						<div className="flex items-center justify-between">
+							<CardTitle className="text-white flex items-center">
+								<Wallet className="w-5 h-5 mr-2" />
+								Select Wallet
+							</CardTitle>
+							<div className="flex items-center space-x-2">
+								<span className="text-gray-400 text-xs">Connect</span>
+								<Switch
+									checked={selectedWalletOption === "select"}
+									onCheckedChange={() =>
+										setSelectedWalletOption(selectedWalletOption === "select" ? "connect" : "select")
+									}
+									className="data-[state=checked]:bg-purple-600 data-[state=unchecked]:bg-gray-600"
+								/>
+								<span className="text-gray-400 text-xs">Select</span>
+							</div>
+						</div>
 					</CardHeader>
 					<CardContent>
-						{wallets.length === 0 ? (
-							<div className="text-center py-8">
-								<Wallet className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-								<p className="text-gray-400">No wallets found</p>
-								<p className="text-gray-500 text-sm">Add a wallet to get started</p>
-							</div>
-						) : (
-							<Select value={selectedWalletId} onValueChange={setSelectedWalletId}>
-								<SelectTrigger size="default" className="bg-black border-gray-800 w-full text-white">
-									<div className="flex items-center space-x-3 w-full">
-										<span className="text-xl">{selectedWallet.networkIcon}</span>
-										<div className="text-left">
-											<div className="text-white capitalize font-medium text-sm">{selectedWallet.name}</div>
-										</div>
+						{selectedWalletOption === "select" ? (
+							// Show Wallet Dropdown
+							<div className="flex items-center space-x-3">
+								{wallets.length === 0 ? (
+									<div className="text-center py-4 flex-1">
+										<Wallet className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+										<p className="text-gray-400 text-sm">No wallets found</p>
 									</div>
-								</SelectTrigger>
-								<SelectContent className="bg-black border-gray-800 w-full">
-									{wallets
-										.filter((wallet) => wallet.network === "solana")
-										.map((wallet) => (
-											<SelectItem
-												key={wallet.id}
-												value={wallet.id}
-												className="text-white cursor-pointer focus:bg-gray-900 w-full"
-											>
-												<div className="flex items-center space-x-3">
-													<span className="text-xl">{wallet.networkIcon}</span>
-													<div>
-														<div className="text-white capitalize font-medium text-sm">{wallet.name}</div>
-														<div className="text-gray-400 text-xs capitalize">{wallet.network}</div>
+								) : (
+									<Select value={selectedWalletId} onValueChange={setSelectedWalletId}>
+										<SelectTrigger className="bg-black border-gray-800 text-white flex-1">
+											<div className="flex items-center space-x-3">
+												<span className="text-xl">{selectedWallet?.networkIcon || "🟣"}</span>
+												<div className="text-left">
+													<div className="text-white capitalize font-medium text-sm">
+														{selectedWallet?.name || "Select wallet"}
 													</div>
 												</div>
-											</SelectItem>
-										))}
-								</SelectContent>
-							</Select>
+											</div>
+										</SelectTrigger>
+										<SelectContent className="bg-black border-gray-800">
+											{wallets
+												.filter((wallet) => wallet.network === "solana")
+												.map((wallet) => (
+													<SelectItem
+														key={wallet.id}
+														value={wallet.id}
+														className="text-white cursor-pointer focus:bg-gray-900"
+													>
+														<div className="flex items-center space-x-3">
+															<span className="text-xl">{wallet.networkIcon}</span>
+															<div>
+																<div className="text-white capitalize font-medium text-sm">{wallet.name}</div>
+																<div className="text-gray-400 text-xs capitalize">{wallet.network}</div>
+															</div>
+														</div>
+													</SelectItem>
+												))}
+										</SelectContent>
+									</Select>
+								)}
+							</div>
+						) : (
+							<div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+								<WalletMultiButton
+									style={{
+										borderRadius: "14px",
+										padding: "10px 20px",
+										fontSize: "14px",
+										backgroundColor: "#944ced",
+									}}
+								/>
+								<WalletDisconnectButton style={{ borderRadius: "14px", padding: "10px 20px", fontSize: "14px" }} />
+							</div>
 						)}
 					</CardContent>
 				</Card>
 			</motion.div>
+
 			<div className="flex-1 overflow-y-auto">
 				{/* Token List */}
 				<motion.div
