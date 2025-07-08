@@ -1,8 +1,17 @@
+import Swap from "@/components/swap";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
 
-import HomeScreen from "./home-screen";
+export const Route = createFileRoute("/swap/")({
+	component: RouteComponent,
+});
 
-const Home = () => {
+function RouteComponent() {
+	const isOnboardingFinished = localStorage.getItem("onboarding-finished");
+
+	if (!isOnboardingFinished) {
+		return <Navigate to="/onboarding" />;
+	}
 	return (
 		<div className="bg-black min-h-screen overflow-clip flex items-center justify-center">
 			<motion.div
@@ -12,10 +21,8 @@ const Home = () => {
 				transition={{ duration: 0.3 }}
 				id="home-container"
 			>
-				<HomeScreen />
+				<Swap />
 			</motion.div>
 		</div>
 	);
-};
-
-export default Home;
+}

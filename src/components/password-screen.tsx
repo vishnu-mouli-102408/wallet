@@ -6,10 +6,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "sonner";
 
 interface PasswordScreenProps {
-	setIsUnlocked: (isUnlocked: boolean) => void;
+	callback: () => void;
 }
 
-const PasswordScreen = ({ setIsUnlocked }: PasswordScreenProps) => {
+const PasswordScreen = ({ callback }: PasswordScreenProps) => {
 	const [password, setPassword] = useState<string>("");
 	const [error, setError] = useState<string>("");
 	const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -35,7 +35,7 @@ const PasswordScreen = ({ setIsUnlocked }: PasswordScreenProps) => {
 			const hashArray = Array.from(new Uint8Array(hashedPassword));
 			const hashBase64 = btoa(hashArray.map((b) => String.fromCharCode(b)).join(""));
 			if (hashBase64 === storedPassword) {
-				setIsUnlocked(true);
+				callback();
 			} else {
 				setError("Invalid Password. Please try again.");
 			}

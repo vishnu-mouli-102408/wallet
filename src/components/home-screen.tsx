@@ -1,4 +1,4 @@
-import { ArrowDownLeft, Check, Copy, Eye, EyeOff, PanelTopDashed, Plus, Send } from "lucide-react";
+import { Check, Copy, Eye, EyeOff, Plus, Repeat, Rocket, Send } from "lucide-react";
 
 import { motion } from "motion/react";
 
@@ -333,11 +333,11 @@ const HomeScreen = () => {
 					whileHover={{ scale: 1.02 }}
 					whileTap={{ scale: 0.98 }}
 					onClick={() => {
-						toast.info("Coming soon");
+						navigate({ to: "/swap" });
 					}}
 				>
-					<ArrowDownLeft className="w-6 h-6 text-white" />
-					<span className="text-white text-sm font-medium">Receive</span>
+					<Repeat className="w-6 h-6 text-white" />
+					<span className="text-white text-sm font-medium">Swap</span>
 				</motion.button>
 
 				<motion.button
@@ -348,7 +348,7 @@ const HomeScreen = () => {
 						navigate({ to: "/launchpad" });
 					}}
 				>
-					<PanelTopDashed className="w-6 h-6 text-white" />
+					<Rocket className="w-6 h-6 text-white" />
 					<span className="text-white text-sm font-medium">Launchpad</span>
 				</motion.button>
 			</motion.div>

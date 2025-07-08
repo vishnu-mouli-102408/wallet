@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as IndexImport } from './routes/index'
+import { Route as SwapIndexImport } from './routes/swap/index'
 import { Route as OnboardingIndexImport } from './routes/onboarding/index'
 import { Route as LaunchpadIndexImport } from './routes/launchpad/index'
 
@@ -20,6 +21,12 @@ import { Route as LaunchpadIndexImport } from './routes/launchpad/index'
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const SwapIndexRoute = SwapIndexImport.update({
+  id: '/swap/',
+  path: '/swap/',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -60,6 +67,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingIndexImport
       parentRoute: typeof rootRoute
     }
+    '/swap/': {
+      id: '/swap/'
+      path: '/swap'
+      fullPath: '/swap'
+      preLoaderRoute: typeof SwapIndexImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -69,12 +83,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/launchpad': typeof LaunchpadIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
+  '/swap': typeof SwapIndexRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/launchpad': typeof LaunchpadIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
+  '/swap': typeof SwapIndexRoute
 }
 
 export interface FileRoutesById {
@@ -82,14 +98,15 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/launchpad/': typeof LaunchpadIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/swap/': typeof SwapIndexRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/launchpad' | '/onboarding'
+  fullPaths: '/' | '/launchpad' | '/onboarding' | '/swap'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/launchpad' | '/onboarding'
-  id: '__root__' | '/' | '/launchpad/' | '/onboarding/'
+  to: '/' | '/launchpad' | '/onboarding' | '/swap'
+  id: '__root__' | '/' | '/launchpad/' | '/onboarding/' | '/swap/'
   fileRoutesById: FileRoutesById
 }
 
@@ -97,12 +114,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LaunchpadIndexRoute: typeof LaunchpadIndexRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
+  SwapIndexRoute: typeof SwapIndexRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LaunchpadIndexRoute: LaunchpadIndexRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
+  SwapIndexRoute: SwapIndexRoute,
 }
 
 export const routeTree = rootRoute
@@ -117,7 +136,8 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/launchpad/",
-        "/onboarding/"
+        "/onboarding/",
+        "/swap/"
       ]
     },
     "/": {
@@ -128,6 +148,9 @@ export const routeTree = rootRoute
     },
     "/onboarding/": {
       "filePath": "onboarding/index.tsx"
+    },
+    "/swap/": {
+      "filePath": "swap/index.tsx"
     }
   }
 }
