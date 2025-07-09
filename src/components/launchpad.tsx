@@ -277,15 +277,26 @@ const Launchpad = () => {
 	const selectedWallet = wallets.find((w) => w.id === selectedWalletId) || wallets[0];
 
 	const loadTokens = useCallback(async () => {
-		if (!selectedWallet) return;
+		if (selectedWalletOption === "connect" && !wallet?.publicKey) {
+			setTokens([]);
+			return;
+		} else if (selectedWalletOption === "select" && !selectedWallet) {
+			setTokens([]);
+			return;
+		}
 
 		setIsLoading(true);
 		try {
 			// const tokens = await getSolanaTokens(new PublicKey(selectedWallet?.address));
 			// Get the tokens
-			const tokens = await connection.getParsedTokenAccountsByOwner(new PublicKey(selectedWallet.address), {
-				programId: TOKEN_2022_PROGRAM_ID,
-			});
+			const tokens = await connection.getParsedTokenAccountsByOwner(
+				selectedWalletOption === "connect" && wallet?.publicKey
+					? wallet?.publicKey
+					: new PublicKey(selectedWallet.address),
+				{
+					programId: TOKEN_2022_PROGRAM_ID,
+				}
+			);
 
 			// Get the balances
 			const balances = tokens?.value?.map(async (accountInfo) => {
@@ -315,11 +326,17 @@ const Launchpad = () => {
 		} finally {
 			setIsLoading(false);
 		}
-	}, [connection, selectedWallet]);
+	}, [connection, selectedWallet, selectedWalletOption, wallet?.publicKey]);
 
 	useEffect(() => {
 		loadTokens();
 	}, [loadTokens, selectedWallet]);
+
+	useEffect(() => {
+		if (selectedWalletOption === "connect" && !wallet?.publicKey) {
+			setTokens([]);
+		}
+	}, [selectedWalletOption, wallet?.publicKey]);
 
 	// console.log("Wallet", wallet.publicKey?.toBase58());
 
@@ -660,9 +677,11 @@ const Launchpad = () => {
 								)}
 							</CardTitle>
 							<CardDescription className="text-gray-400">
-								{selectedWallet
-									? `Showing tokens for ${formatAddress(selectedWallet.address)}`
-									: "Select a wallet to view tokens"}
+								{selectedWalletOption === "connect"
+									? wallet?.publicKey?.toString()
+										? "Showing tokens for" + " " + formatAddress(wallet?.publicKey?.toString() || "")
+										: "No wallet connected"
+									: "Showing tokens for" + " " + formatAddress(selectedWallet.address)}
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
