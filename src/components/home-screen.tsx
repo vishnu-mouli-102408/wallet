@@ -1,4 +1,4 @@
-import { Check, Copy, Eye, EyeOff, Plus, Repeat, Rocket, Send } from "lucide-react";
+import { Check, Copy, Eye, EyeOff, Plus, Rocket, Send } from "lucide-react";
 
 import { motion } from "motion/react";
 
@@ -313,7 +313,7 @@ const HomeScreen = () => {
 				</motion.div>
 			</div>
 			<motion.div
-				className="grid grid-cols-3 gap-4"
+				className="grid grid-cols-2 gap-4"
 				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ delay: 0.3 }}
@@ -328,7 +328,7 @@ const HomeScreen = () => {
 					<span className="text-white text-sm font-medium">Send</span>
 				</motion.button>
 
-				<motion.button
+				{/* <motion.button
 					className="bg-black border border-gray-800 rounded-xl p-4 flex flex-col items-center space-y-2"
 					whileHover={{ scale: 1.02 }}
 					whileTap={{ scale: 0.98 }}
@@ -338,7 +338,7 @@ const HomeScreen = () => {
 				>
 					<Repeat className="w-6 h-6 text-white" />
 					<span className="text-white text-sm font-medium">Swap</span>
-				</motion.button>
+				</motion.button> */}
 
 				<motion.button
 					className="bg-black border border-gray-800 rounded-xl p-4 flex flex-col items-center space-y-2"

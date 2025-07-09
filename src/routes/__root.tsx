@@ -1,4 +1,6 @@
 import PasswordScreen from "@/components/password-screen";
+import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
+import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
@@ -42,7 +44,15 @@ const Root = () => {
 		);
 	}
 
-	return <Outlet />;
+	return (
+		<ConnectionProvider endpoint={"https://api.devnet.solana.com"}>
+			<WalletProvider wallets={[]} autoConnect>
+				<WalletModalProvider>
+					<Outlet />;
+				</WalletModalProvider>
+			</WalletProvider>
+		</ConnectionProvider>
+	);
 };
 
 export const Route = createRootRoute({

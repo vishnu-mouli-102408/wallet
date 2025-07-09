@@ -1,8 +1,6 @@
 import Launchpad from "@/components/launchpad";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import "@solana/wallet-adapter-react-ui/styles.css";
 
 export const Route = createFileRoute("/launchpad/")({
@@ -25,13 +23,7 @@ function RouteComponent() {
 				transition={{ duration: 0.3 }}
 				id="home-container"
 			>
-				<ConnectionProvider endpoint={"https://api.devnet.solana.com"}>
-					<WalletProvider wallets={[]} autoConnect>
-						<WalletModalProvider>
-							<Launchpad />
-						</WalletModalProvider>
-					</WalletProvider>
-				</ConnectionProvider>
+				<Launchpad />
 			</motion.div>
 		</div>
 	);
