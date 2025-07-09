@@ -48,7 +48,7 @@ const Root = () => {
 		<ConnectionProvider endpoint={"https://api.devnet.solana.com"}>
 			<WalletProvider wallets={[]} autoConnect>
 				<WalletModalProvider>
-					<Outlet />;
+					<Outlet />
 				</WalletModalProvider>
 			</WalletProvider>
 		</ConnectionProvider>
